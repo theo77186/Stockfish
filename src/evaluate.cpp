@@ -185,10 +185,12 @@ namespace {
   const Score TrappedRook         = S(92,  0);
   const Score Checked             = S(20, 20);
   const Score ThreatByHangingPawn = S(71, 61);
-  const Score LooseEnemies        = S( 0, 25);
+        Score LooseEnemies        = S( 0, 25);
   const Score Hanging             = S(48, 27);
   const Score ThreatByPawnPush    = S(38, 22);
   const Score Unstoppable         = S( 0, 20);
+
+  TUNE(SetRange(-10, 40), LooseEnemies);
 
   // Penalty for a bishop on a1/h1 (a8/h8 for black) which is trapped by
   // a friendly pawn on b2/g2 (b7/g7 for black). This can obviously only
