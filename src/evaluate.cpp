@@ -189,6 +189,10 @@ namespace {
   const Score Hanging             = S(48, 27);
   const Score ThreatByPawnPush    = S(38, 22);
   const Score Unstoppable         = S( 0, 20);
+        Score LooseEnemiesBase    = S( 0, 17);
+        Score LooseEnemiesBonus   = S( 0,  7);
+
+  TUNE(SetRange(-10, 35), LooseEnemiesBase, LooseEnemiesBonus);
 
   // Penalty for a bishop on a1/h1 (a8/h8 for black) which is trapped by
   // a friendly pawn on b2/g2 (b7/g7 for black). This can obviously only
@@ -474,9 +478,18 @@ namespace {
     Score score = SCORE_ZERO;
 
     // Small bonus if the opponent has loose pawns or pieces
+    /*
     if (   (pos.pieces(Them) ^ pos.pieces(Them, QUEEN, KING))
         & ~(ei.attackedBy[Us][ALL_PIECES] | ei.attackedBy[Them][ALL_PIECES]))
         score += LooseEnemies;
+    */
+    b =    (pos.pieces(Them) ^ pos.pieces(Them, QUEEN, KING))
+        & ~(ei.attackedBy[Us][ALL_PIECES] | ei.attackedBy[Them][ALL_PIECES]);
+
+    if (b)
+    {
+        score += LooseEnemiesBase + popcount(b) * LooseEnemiesBonus;
+    }
 
     // Non-pawn enemies attacked by a pawn
     weak = (pos.pieces(Them) ^ pos.pieces(Them, PAWN)) & ei.attackedBy[Us][PAWN];
