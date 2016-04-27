@@ -170,6 +170,8 @@ namespace {
   void update_pv(Move* pv, Move move, Move* childPv);
   void update_stats(const Position& pos, Stack* ss, Move move, Depth depth, Move* quiets, int quietsCnt);
   void check_time();
+  int lmrA = 20, lmrB = 20, lmrC = 20, lmrD = 400000;
+  TUNE(lmrA, lmrB, lmrC, lmrD);
 
 } // namespace
 
@@ -1018,7 +1020,7 @@ moves_loop: // When in check search starts from here
               r += ONE_PLY;
 
           // Decrease/increase reduction for moves with a good/bad history
-          int rHist = (hValue + cmhValue + fmValue + fm2Value) / 20000;
+          int rHist = (20 * hValue + lmrA * cmhValue + lmrB * fmValue + lmrC * fm2Value) / lmrD;
           r = std::max(DEPTH_ZERO, r - rHist * ONE_PLY);
 
           // Decrease reduction for moves that escape a capture. Filter out
