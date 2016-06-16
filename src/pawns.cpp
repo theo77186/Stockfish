@@ -35,7 +35,7 @@ namespace {
   const Score Isolated[2] = { S(45, 40), S(30, 27) };
 
   // Backward pawn penalty by opposed flag
-  const Score Backward[2] = { S(56, 33), S(41, 19) };
+  const Score Backward[2] = { S(77, 43), S(54, 26) };
 
   // Unsupported pawn penalty for pawns which are neither isolated or backward,
   // by number of pawns it supports [less than 2 / exactly 2].
