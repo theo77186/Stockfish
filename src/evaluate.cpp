@@ -771,9 +771,9 @@ namespace {
 } // namespace
 
 
-/// update_contempt updates the contempt value to be used in evaluate()
+/// update_contempt() updates the contempt value to be used in evaluate()
 void Eval::update_contempt() {
-  contempt[WHITE] = make_score(Options["Contempt"] * PawnValueEg / 100, 0);
+  contempt[WHITE] = make_score(Options["Contempt"] * PawnValueEg / 100, 0); // From centipawns
   contempt[BLACK] = -contempt[WHITE];
 }
 
