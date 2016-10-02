@@ -28,6 +28,7 @@
 #include "evaluate.h"
 #include "material.h"
 #include "pawns.h"
+#include "uci.h"
 
 namespace {
 
@@ -216,6 +217,9 @@ namespace {
   const int RookCheck         = 638;
   const int BishopCheck       = 538;
   const int KnightCheck       = 874;
+
+  // Cached contempt value
+  Score contempt[COLOR_NB] = {make_score(0, 0), make_score(0, 0)};
 
 
   // eval_init() initializes king and attack bitboards for a given color
@@ -767,11 +771,17 @@ namespace {
 } // namespace
 
 
+/// update_contempt updates the contempt value to be used in evaluate()
+void Eval::update_contempt() {
+  contempt[WHITE] = make_score(Options["Contempt"] * PawnValueEg / 100, 0);
+  contempt[BLACK] = -contempt[WHITE];
+}
+
 /// evaluate() is the main evaluation function. It returns a static evaluation
 /// of the position from the point of view of the side to move.
 
 template<bool DoTrace>
-Value Eval::evaluate(const Position& pos) {
+Value Eval::evaluate(const Position& pos, const Color root_sidetomove) {
 
   assert(!pos.checkers());
 
@@ -854,6 +864,9 @@ Value Eval::evaluate(const Position& pos) {
   // Evaluate scale factor for the winning side
   ScaleFactor sf = evaluate_scale_factor(pos, ei, eg_value(score));
 
+  // Add phase-dependent contempt
+  score += contempt[root_sidetomove];
+
   // Interpolate between a middlegame and a (scaled by 'sf') endgame score
   Value v =  mg_value(score) * int(ei.me->game_phase())
            + eg_value(score) * int(PHASE_MIDGAME - ei.me->game_phase()) * sf / SCALE_FACTOR_NORMAL;
@@ -876,8 +889,8 @@ Value Eval::evaluate(const Position& pos) {
 }
 
 // Explicit template instantiations
-template Value Eval::evaluate<true >(const Position&);
-template Value Eval::evaluate<false>(const Position&);
+template Value Eval::evaluate<true >(const Position&, const Color root_sidetomove);
+template Value Eval::evaluate<false>(const Position&, const Color root_sidetomove);
 
 
 /// trace() is like evaluate(), but instead of returning a value, it returns
@@ -888,7 +901,7 @@ std::string Eval::trace(const Position& pos) {
 
   std::memset(scores, 0, sizeof(scores));
 
-  Value v = evaluate<true>(pos);
+  Value v = evaluate<true>(pos, WHITE);
   v = pos.side_to_move() == WHITE ? v : -v; // White's point of view
 
   std::stringstream ss;
