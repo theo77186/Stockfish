@@ -37,6 +37,10 @@
 #include "uci.h"
 #include "syzygy/tbprobe.h"
 
+namespace Eval {
+  Score ContemptScore;
+}
+
 namespace Search {
 
   SignalsType Signals;
@@ -157,7 +161,6 @@ namespace {
   const size_t HalfDensitySize = std::extent<decltype(HalfDensity)>::value;
 
   EasyMoveManager EasyMove;
-  Value DrawValue[COLOR_NB];
 
   template <NodeType NT>
   Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, bool cutNode);
@@ -259,8 +262,7 @@ void MainThread::search() {
   Time.init(Limits, us, rootPos.game_ply());
 
   int contempt = Options["Contempt"] * PawnValueEg / 100; // From centipawns
-  DrawValue[ us] = VALUE_DRAW - Value(contempt);
-  DrawValue[~us] = VALUE_DRAW + Value(contempt);
+  Eval::ContemptScore = make_score((us == WHITE) ? contempt : -contempt, 0);
 
   if (rootMoves.empty())
   {
@@ -597,7 +599,7 @@ namespace {
         // Step 2. Check for aborted search and immediate draw
         if (Signals.stop.load(std::memory_order_relaxed) || pos.is_draw() || ss->ply >= MAX_PLY)
             return ss->ply >= MAX_PLY && !inCheck ? evaluate(pos)
-                                                  : DrawValue[pos.side_to_move()];
+                                                  : VALUE_DRAW;
 
         // Step 3. Mate distance pruning. Even if we mate at the next move our score
         // would be at best mate_in(ss->ply+1), but if alpha is already bigger because
@@ -1125,7 +1127,7 @@ moves_loop: // When in check search starts from here
 
     if (!moveCount)
         bestValue = excludedMove ? alpha
-                   :     inCheck ? mated_in(ss->ply) : DrawValue[pos.side_to_move()];
+                   :     inCheck ? mated_in(ss->ply) : VALUE_DRAW;
     else if (bestMove)
     {
         int d = depth / ONE_PLY;
@@ -1204,7 +1206,7 @@ moves_loop: // When in check search starts from here
     // Check for an instant draw or if the maximum ply has been reached
     if (pos.is_draw() || ss->ply >= MAX_PLY)
         return ss->ply >= MAX_PLY && !InCheck ? evaluate(pos)
-                                              : DrawValue[pos.side_to_move()];
+                                              : VALUE_DRAW;
 
     assert(0 <= ss->ply && ss->ply < MAX_PLY);
 

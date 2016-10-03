@@ -854,6 +854,9 @@ Value Eval::evaluate(const Position& pos) {
   // Evaluate scale factor for the winning side
   ScaleFactor sf = evaluate_scale_factor(pos, ei, eg_value(score));
 
+  // Add phase-dependent contempt
+  score += ContemptScore;
+
   // Interpolate between a middlegame and a (scaled by 'sf') endgame score
   Value v =  mg_value(score) * int(ei.me->game_phase())
            + eg_value(score) * int(PHASE_MIDGAME - ei.me->game_phase()) * sf / SCALE_FACTOR_NORMAL;
