@@ -785,13 +785,12 @@ namespace {
   }
 
 
-  Value lazy_eval(Value mg, Value eg) {
+  Value lazy_eval(Value mg, Value eg, Value beta) {
 
-    if (mg > LazyEval && eg > LazyEval)
-        return  LazyEval + ((mg + eg) / 2 - LazyEval) / 4;
-
-    else if (mg < -LazyEval && eg < -LazyEval)
-        return -LazyEval + ((mg + eg) / 2 + LazyEval) / 4;
+    Value lazyThresold = beta + LazyEval; // RFC: can this overflow?
+    
+    if (mg > lazyThresold && eg > lazyThresold)
+        return  lazyThresold + ((mg + eg) / 2 - lazyThresold) / 4;
 
     return VALUE_ZERO;
   }
@@ -803,7 +802,7 @@ namespace {
 /// of the position from the point of view of the side to move.
 
 template<bool DoTrace>
-Value Eval::evaluate(const Position& pos) {
+Value Eval::evaluate(const Position& pos, Value beta) {
 
   assert(!pos.checkers());
 
@@ -828,10 +827,11 @@ Value Eval::evaluate(const Position& pos) {
   score += ei.pi->pawns_score();
 
   // We have taken into account all cheap evaluation terms.
-  // If score exceeds a threshold return a lazy evaluation.
-  Value lazy = lazy_eval(mg_value(score), eg_value(score));
+  // If score exceeds beta plus a threshold return a lazy evaluation.
+  Value lazy = pos.side_to_move() == WHITE ? lazy_eval( mg_value(score),  eg_value(score), beta) : \
+                                             lazy_eval(-mg_value(score), -eg_value(score), beta);
   if (lazy)
-      return pos.side_to_move() == WHITE ? lazy : -lazy;
+      return lazy;
 
   // Initialize attack and king safety bitboards
   ei.attackedBy[WHITE][ALL_PIECES] = ei.attackedBy[BLACK][ALL_PIECES] = 0;
@@ -904,8 +904,8 @@ Value Eval::evaluate(const Position& pos) {
 }
 
 // Explicit template instantiations
-template Value Eval::evaluate<true >(const Position&);
-template Value Eval::evaluate<false>(const Position&);
+template Value Eval::evaluate<true >(const Position&, Value beta = VALUE_INFINITE);
+template Value Eval::evaluate<false>(const Position&, Value beta = VALUE_INFINITE);
 
 
 /// trace() is like evaluate(), but instead of returning a value, it returns
