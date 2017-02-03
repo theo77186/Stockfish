@@ -1062,7 +1062,8 @@ moves_loop: // When in check search starts from here
           && !moveCountPruning
           &&  pos.see_ge(move, VALUE_ZERO))
 #ifdef THREECHECK
-          extension = (pos.is_three_check() && PvNode) ? 2 * ONE_PLY : ONE_PLY;
+          extension = (pos.is_three_check() PvNode &&
+                       pos.non_pawn_material(WHITE) + pos.non_pawn_material(BLACK) >= 9500) ? 2 * ONE_PLY : ONE_PLY;
 #else
           extension = ONE_PLY;
 #endif
