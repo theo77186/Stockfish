@@ -1062,7 +1062,7 @@ moves_loop: // When in check search starts from here
           && !moveCountPruning
           &&  pos.see_ge(move, VALUE_ZERO))
 #ifdef THREECHECK
-          extension = pos.is_three_check() ? 2 * ONE_PLY : ONE_PLY;
+          extension = (pos.is_three_check() && PvNode) ? 2 * ONE_PLY : ONE_PLY;
 #else
           extension = ONE_PLY;
 #endif
